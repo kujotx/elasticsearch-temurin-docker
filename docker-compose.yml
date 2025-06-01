@@ -1,0 +1,16 @@
+version: '3'
+services:
+  elasticsearch:
+    build:
+      context: .
+      dockerfile: Dockerfile.elasticsearch5
+    container_name: es5
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+    volumes:
+      - es5data:/usr/share/elasticsearch/data
+volumes:
+  es5data:

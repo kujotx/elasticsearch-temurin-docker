@@ -1,0 +1,32 @@
+# Use Eclipse Temurin JDK 8 base image
+FROM eclipse-temurin:8-jdk
+
+LABEL maintainer="kujotx@gmail.com"
+
+# Set environment variables for Elasticsearch
+ENV ES_VERSION=5.6.16 \
+    ES_HOME=/usr/share/elasticsearch \
+    PATH=$ES_HOME/bin:$PATH
+
+# Install required packages and Elasticsearch
+RUN apt-get update && \
+    apt-get install -y wget gnupg apt-transport-https && \
+    wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$ES_VERSION.deb && \
+    dpkg -i elasticsearch-$ES_VERSION.deb && \
+    rm elasticsearch-$ES_VERSION.deb && \
+    apt-get clean && \
+    mkdir -p /usr/share/elasticsearch/config && \
+    echo "cluster.name: docker-cluster" > /usr/share/elasticsearch/config/elasticsearch.yml && \
+    echo "network.host: 0.0.0.0" >> /usr/share/elasticsearch/config/elasticsearch.yml && \
+    printf "status = error\nappender.console.type = Console\nappender.console.name = console\nappender.console.layout.type = PatternLayout\nappender.console.layout.pattern = [%%d{ISO8601}] [%%t] %%-5p %%c %%marker - %%m%%n\nrootLogger.level = info\nrootLogger.appenderRef.console.ref = console\n" > /usr/share/elasticsearch/config/log4j2.properties
+
+RUN id -u elasticsearch 2>/dev/null || useradd -ms /bin/bash elasticsearch && \
+    chown -R elasticsearch:elasticsearch /usr/share/elasticsearch
+
+USER elasticsearch
+
+# Expose Elasticsearch HTTP and transport ports
+EXPOSE 9200 9200
+
+# Default command
+CMD ["/usr/share/elasticsearch/bin/elasticsearch"]
